@@ -3,12 +3,6 @@ import { getSupabaseAdmin, getUserFromToken } from "../lib/supabase.js";
 
 export const authRouter = new Hono();
 
-// Test endpoint to verify routes are working
-authRouter.get("/test", async (c) => {
-  console.log("Auth test endpoint hit")
-  return c.json({ message: "Auth routes are working", timestamp: new Date().toISOString() });
-});
-
 // Debug endpoint to check environment variable
 authRouter.get("/debug/env", async (c) => {
   return c.json({
@@ -76,30 +70,4 @@ authRouter.get("/profiles", async (c) => {
     .select("*")
     .order("full_name");
   return c.json(data || []);
-});
-
-// Email/Password Login
-authRouter.post("/login", async (c) => {
-  const { email, password } = await c.req.json();
-
-  if (!email || !password) {
-    return c.json({ error: "Email and password are required" }, 400);
-  }
-
-  const supabase = getSupabaseAdmin();
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    return c.json({ error: error.message }, 400);
-  }
-
-  return c.json({
-    access_token: data.session.access_token,
-    refresh_token: data.session.refresh_token,
-    user: data.user,
-  });
 });
