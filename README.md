@@ -8,6 +8,15 @@ A comprehensive, enterprise-grade leave management system built with modern web 
 [![Google Calendar](https://img.shields.io/badge/Google_Calendar-API-4285F4?style=flat&logo=google-calendar)](https://developers.google.com/calendar)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)](https://www.docker.com/)
 
+Admin Dashboard View:-
+<img width="1898" height="923" alt="image" src="https://github.com/user-attachments/assets/8afd1089-785c-4acb-be19-fef70a5c3f43" />
+
+Manager Dashboard View:-
+<img width="1898" height="922" alt="image" src="https://github.com/user-attachments/assets/cbba143f-cc9b-48bc-9c79-9bef243d68af" />
+
+Member Dashboard View:-
+<img width="1919" height="924" alt="image" src="https://github.com/user-attachments/assets/286e838f-be82-44fa-b0be-27148353d823" />
+
 ## 🎯 Project Overview
 
 This application solves the complex challenge of enterprise leave management by providing:
