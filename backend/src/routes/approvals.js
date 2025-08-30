@@ -5,6 +5,9 @@ import { sendEmail, sendSlack } from "../lib/notify.js";
 
 export const approvalsRouter = new Hono();
 
+// Feature flag: only attempt Google Calendar sync when explicitly enabled
+const CALENDAR_ENABLED = process.env.ENABLE_CALENDAR === "true";
+
 async function requireManager(c) {
   const token = c.req.header("authorization")?.replace("Bearer ", "");
   const info = await getUserFromToken(token);
@@ -81,15 +84,33 @@ approvalsRouter.post("/:id/decision", async (c) => {
 
   let calendar_event_id = null;
   if (decision === "APPROVED") {
-    const summary = `${leave.leave_types.name} | ${
-      leave.profiles.full_name || leave.profiles.email
-    } | ${leave.start_date} - ${leave.end_date}`;
-    calendar_event_id = await createCalendarEvent({
-      summary,
-      description: leave.reason || "",
-      startDate: leave.start_date,
-      endDate: leave.end_date,
-    });
+    if (CALENDAR_ENABLED) {
+      try {
+        const summary = `${leave.leave_types.name} | ${
+          leave.profiles.full_name || leave.profiles.email
+        } | ${leave.start_date} - ${leave.end_date}`;
+        calendar_event_id = await createCalendarEvent({
+          summary,
+          description: leave.reason || "",
+          startDate: leave.start_date,
+          endDate: leave.end_date,
+        });
+        console.log(
+          "Calendar event created (POST decision):",
+          calendar_event_id
+        );
+      } catch (e) {
+        console.error(
+          "Calendar creation failed (POST decision), continuing:",
+          e?.message || e
+        );
+        calendar_event_id = null;
+      }
+    } else {
+      console.log(
+        "Calendar disabled via ENABLE_CALENDAR, skipping (POST decision)"
+      );
+    }
   }
 
   const { data: updated, error } = await supabase
@@ -117,10 +138,23 @@ approvalsRouter.post("/:id/decision", async (c) => {
     ${decision === "APPROVED" ? `<p>Calendar event created.</p>` : ""}
     ${note ? `<p>Note: ${note}</p>` : ""}
   `;
-  await sendEmail({ to: toEmail, subject, html });
-  await sendSlack({
-    text: `Leave ${decision}: ${summaryForSlack(leave)} by ${info.user.email}`,
-  });
+
+  // Send notifications (don't fail approval if notifications fail)
+  try {
+    await sendEmail({ to: toEmail, subject, html });
+  } catch (e) {
+    console.error("Email notification failed:", e.message);
+  }
+
+  try {
+    await sendSlack({
+      text: `Leave ${decision}: ${summaryForSlack(leave)} by ${
+        info.user.email
+      }`,
+    });
+  } catch (e) {
+    console.error("Slack notification failed:", e.message);
+  }
 
   return c.json(updated);
 });
@@ -163,15 +197,33 @@ approvalsRouter.put("/:id", async (c) => {
 
   let calendar_event_id = null;
   if (status === "APPROVED") {
-    const summary = `${leave.leave_types.name} | ${
-      leave.profiles.full_name || leave.profiles.email
-    } | ${leave.start_date} - ${leave.end_date}`;
-    calendar_event_id = await createCalendarEvent({
-      summary,
-      description: leave.reason || "",
-      startDate: leave.start_date,
-      endDate: leave.end_date,
-    });
+    if (CALENDAR_ENABLED) {
+      try {
+        const summary = `${leave.leave_types.name} | ${
+          leave.profiles.full_name || leave.profiles.email
+        } | ${leave.start_date} - ${leave.end_date}`;
+        calendar_event_id = await createCalendarEvent({
+          summary,
+          description: leave.reason || "",
+          startDate: leave.start_date,
+          endDate: leave.end_date,
+        });
+        console.log(
+          "Calendar event created (PUT approval):",
+          calendar_event_id
+        );
+      } catch (e) {
+        console.error(
+          "Calendar creation failed (PUT approval), continuing:",
+          e?.message || e
+        );
+        calendar_event_id = null;
+      }
+    } else {
+      console.log(
+        "Calendar disabled via ENABLE_CALENDAR, skipping (PUT approval)"
+      );
+    }
   }
 
   const { data: updated, error } = await supabase
@@ -186,6 +238,36 @@ approvalsRouter.put("/:id", async (c) => {
     .select()
     .single();
   if (error) return c.json({ error: error.message }, 400);
+
+  // Send notifications for PUT approval (similar to POST decision)
+  const toEmail = leave.profiles.email;
+  const subject = `Leave ${status.toLowerCase()}`;
+  const html = `
+    <p>Hi ${leave.profiles.full_name || leave.profiles.email},</p>
+    <p>Your leave request (${leave.leave_types.name}, ${leave.start_date} → ${
+    leave.end_date
+  }) has been <b>${status.toLowerCase()}</b>.</p>
+    ${
+      status === "APPROVED" && calendar_event_id
+        ? `<p>Calendar event created.</p>`
+        : ""
+    }
+  `;
+
+  // Send notifications (don't fail approval if notifications fail)
+  try {
+    await sendEmail({ to: toEmail, subject, html });
+  } catch (e) {
+    console.error("Email notification failed (PUT):", e.message);
+  }
+
+  try {
+    await sendSlack({
+      text: `Leave ${status}: ${summaryForSlack(leave)} by ${info.user.email}`,
+    });
+  } catch (e) {
+    console.error("Slack notification failed (PUT):", e.message);
+  }
 
   return c.json(updated);
 });

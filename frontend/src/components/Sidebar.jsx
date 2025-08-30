@@ -14,7 +14,7 @@ export default function Sidebar({ profile, onSignOut }) {
   const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: "🏠", roles: ["MEMBER", "MANAGER", "ADMIN"] },
     { path: "/apply-leave", label: "Apply Leave", icon: "➕", roles: ["MEMBER", "MANAGER"] }, // No ADMIN
-    { path: "/my-leaves", label: "My Leaves", icon: "📋", roles: ["MEMBER", "MANAGER", "ADMIN"] },
+    { path: "/my-leaves", label: "My Leaves", icon: "📋", roles: ["MEMBER", "MANAGER"] }, // No ADMIN
     { path: "/approvals", label: "Approvals", icon: "✅", roles: ["MANAGER", "ADMIN"] },
   ]
 
@@ -23,6 +23,9 @@ export default function Sidebar({ profile, onSignOut }) {
     { path: "/admin/users", label: "User Assignments", icon: "👥" },
     { path: "/admin/roles", label: "Role Management", icon: "🔒" },
     { path: "/admin/user-leave-types", label: "Leave Type Assignments", icon: "📝" },
+    { path: "/admin/projects", label: "Projects", icon: "🏢" },
+    { path: "/admin/regions", label: "Regions", icon: "🌍" },
+    { path: "/admin/groups", label: "Groups", icon: "👥" },
     { path: "/admin/integrations", label: "Integrations", icon: "🔗" },
   ]
 

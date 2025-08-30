@@ -181,6 +181,11 @@ adminRouter.get("/users", async (c) => {
     .from("profiles")
     .select("*")
     .order("full_name");
+
+  console.log(
+    `👥 Users loaded:`,
+    data?.map((u) => `${u.email}: ${u.role}`)
+  );
   return c.json(data || []);
 });
 
@@ -229,6 +234,8 @@ adminRouter.patch("/users/:userId/role", async (c) => {
   const userId = c.req.param("userId");
   const { role } = await c.req.json();
 
+  console.log(`🔧 Role update attempt: User ${userId} → ${role}`);
+
   // Validate role
   if (!["ADMIN", "MANAGER", "MEMBER"].includes(role)) {
     return c.json({ error: "Invalid role" }, 400);
@@ -246,7 +253,12 @@ adminRouter.patch("/users/:userId/role", async (c) => {
     .select()
     .single();
 
-  if (error) return c.json({ error: error.message }, 400);
+  if (error) {
+    console.error(`❌ Role update failed:`, error);
+    return c.json({ error: error.message }, 400);
+  }
+
+  console.log(`✅ Role update successful:`, data);
   return c.json(data);
 });
 

@@ -26,27 +26,43 @@ authRouter.post("/profiles/upsert", async (c) => {
   const supabase = getSupabaseAdmin();
   const { full_name, avatar_url } = await c.req.json();
 
-  // Check if this is the first admin (from environment variable)
+  // Check if profile already exists to preserve role
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", info.user.id)
+    .single();
+
+  // Only set role if user doesn't exist (first login) or has no role
+  const shouldSetRole = !existingProfile || !existingProfile.role;
   const isFirstAdmin = info.user.email === process.env.FIRST_ADMIN_EMAIL;
   const defaultRole = isFirstAdmin ? "ADMIN" : "MEMBER";
 
   // Debug logging
   console.log("🔍 Profile creation debug:");
   console.log("User email:", info.user.email);
+  console.log("Existing profile role:", existingProfile?.role || "none");
+  console.log("Should set role?", shouldSetRole);
   console.log("FIRST_ADMIN_EMAIL env var:", process.env.FIRST_ADMIN_EMAIL);
   console.log("Is first admin?", isFirstAdmin);
-  console.log("Assigned role:", defaultRole);
+  console.log("Default role (if setting):", defaultRole);
 
-  await supabase.from("profiles").upsert(
-    {
-      id: info.user.id,
-      email: info.user.email,
-      full_name: full_name || info.user.user_metadata?.full_name || "",
-      avatar_url: avatar_url || info.user.user_metadata?.avatar_url || "",
-      role: defaultRole,
-    },
-    { onConflict: "id" }
-  );
+  const profileData = {
+    id: info.user.id,
+    email: info.user.email,
+    full_name: full_name || info.user.user_metadata?.full_name || "",
+    avatar_url: avatar_url || info.user.user_metadata?.avatar_url || "",
+  };
+
+  // Only include role if we should set it (first login or no existing role)
+  if (shouldSetRole) {
+    profileData.role = defaultRole;
+    console.log("✅ Setting role to:", defaultRole);
+  } else {
+    console.log("✅ Preserving existing role:", existingProfile.role);
+  }
+
+  await supabase.from("profiles").upsert(profileData, { onConflict: "id" });
   return c.json({ ok: true });
 });
 

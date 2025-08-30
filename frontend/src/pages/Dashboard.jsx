@@ -32,19 +32,37 @@ export default function Dashboard() {
           }),
         })
 
-        // Get leave stats
-        const leavesRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/leaves`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (leavesRes.ok) {
-          const leaves = await leavesRes.json()
-          setStats({
-            totalLeaves: leaves.length,
-            pendingLeaves: leaves.filter(l => l.status === 'PENDING').length,
-            approvedLeaves: leaves.filter(l => l.status === 'APPROVED').length,
-            rejectedLeaves: leaves.filter(l => l.status === 'REJECTED').length,
+        // Get leave stats based on role
+        if (data.profile?.role === 'ADMIN') {
+          // For ADMIN: Get all employees' leave statistics
+          const approvalsRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/approvals`, {
+            headers: { Authorization: `Bearer ${token}` },
           })
-          setRecentLeaves(leaves.slice(0, 5)) // Get recent 5 leaves
+          if (approvalsRes.ok) {
+            const allLeaves = await approvalsRes.json()
+            setStats({
+              totalLeaves: allLeaves.length,
+              pendingLeaves: allLeaves.filter(l => l.status === 'PENDING').length,
+              approvedLeaves: allLeaves.filter(l => l.status === 'APPROVED').length,
+              rejectedLeaves: allLeaves.filter(l => l.status === 'REJECTED').length,
+            })
+            setRecentLeaves(allLeaves.slice(0, 5)) // Get recent 5 leaves from all employees
+          }
+        } else {
+          // For MEMBER/MANAGER: Get their own leave stats
+          const leavesRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/leaves`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          if (leavesRes.ok) {
+            const leaves = await leavesRes.json()
+            setStats({
+              totalLeaves: leaves.length,
+              pendingLeaves: leaves.filter(l => l.status === 'PENDING').length,
+              approvedLeaves: leaves.filter(l => l.status === 'APPROVED').length,
+              rejectedLeaves: leaves.filter(l => l.status === 'REJECTED').length,
+            })
+            setRecentLeaves(leaves.slice(0, 5)) // Get recent 5 leaves
+          }
         }
       } catch (error) {
         console.error("Error loading dashboard:", error)
@@ -144,6 +162,17 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            {profile?.role === 'ADMIN' ? 'Organization Overview' : 'Your Leave Summary'}
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            {profile?.role === 'ADMIN' 
+              ? 'Overview of all employee leave requests across the organization' 
+              : 'Summary of your leave requests and their current status'}
+          </p>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Leaves */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
@@ -156,7 +185,9 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Leaves</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {profile?.role === 'ADMIN' ? 'Total Employee Requests' : 'Total Leaves'}
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalLeaves}</p>
               </div>
             </div>
@@ -173,7 +204,9 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Requests</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {profile?.role === 'ADMIN' ? 'Awaiting Approval' : 'Pending Requests'}
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.pendingLeaves}</p>
               </div>
             </div>
@@ -190,7 +223,9 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Approved Leaves</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {profile?.role === 'ADMIN' ? 'Approved Requests' : 'Approved Leaves'}
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.approvedLeaves}</p>
               </div>
             </div>
@@ -220,24 +255,28 @@ export default function Dashboard() {
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <a 
-                  href="/apply" 
-                  className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Apply for Leave
-                </a>
-                <a 
-                  href="/leaves" 
-                  className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  View My Leaves
-                </a>
+                {profile?.role !== 'ADMIN' && (
+                  <>
+                    <a 
+                      href="/apply-leave" 
+                      className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Apply for Leave
+                    </a>
+                    <a 
+                      href="/my-leaves" 
+                      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      View My Leaves
+                    </a>
+                  </>
+                )}
                 {(profile?.role === 'MANAGER' || profile?.role === 'ADMIN') && (
                   <a 
                     href="/approvals" 
@@ -249,6 +288,37 @@ export default function Dashboard() {
                     Review Approvals
                   </a>
                 )}
+                {profile?.role === 'ADMIN' && (
+                  <>
+                    <a 
+                      href="/admin/roles" 
+                      className="w-full flex items-center justify-center px-4 py-3 border border-purple-300 dark:border-purple-700 text-sm font-medium rounded-lg text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:focus:ring-purple-400 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      </svg>
+                      Manage Roles
+                    </a>
+                    <a 
+                      href="/admin/projects" 
+                      className="w-full flex items-center justify-center px-4 py-3 border border-blue-300 dark:border-blue-700 text-sm font-medium rounded-lg text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      Manage Organization
+                    </a>
+                    <a 
+                      href="/admin/users" 
+                      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      </svg>
+                      User Management
+                    </a>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -257,8 +327,13 @@ export default function Dashboard() {
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Leave Requests</h3>
-                <a href="/leaves" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {profile?.role === 'ADMIN' ? 'Recent Employee Requests' : 'Recent Leave Requests'}
+                </h3>
+                <a 
+                  href={profile?.role === 'ADMIN' ? "/approvals" : "/my-leaves"} 
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
+                >
                   View all →
                 </a>
               </div>

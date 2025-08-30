@@ -13,6 +13,9 @@ import AdminIntegrations from "./pages/admin/AdminIntegrations.jsx"
 import AdminUserAssignments from "./pages/admin/AdminUserAssignments.jsx"
 import AdminRoleManagement from "./pages/admin/AdminRoleManagement.jsx"
 import AdminUserLeaveTypes from "./pages/admin/AdminUserLeaveTypes.jsx"
+import AdminProjects from "./pages/admin/AdminProjects.jsx"
+import AdminRegions from "./pages/admin/AdminRegions.jsx"
+import AdminGroups from "./pages/admin/AdminGroups.jsx"
 
 function useSession() {
   const [session, setSession] = useState(null)
@@ -235,6 +238,36 @@ function App() {
             <PrivateRoute>
               <Layout>
                 <AdminIntegrations />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/projects"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <AdminProjects />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/regions"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <AdminRegions />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/groups"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <AdminGroups />
               </Layout>
             </PrivateRoute>
           }
