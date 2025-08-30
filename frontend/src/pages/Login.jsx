@@ -12,14 +12,12 @@ export default function Login() {
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        console.log("🔍 Initial session check:", session ? "Found session" : "No session")
         
         if (session) {
-          console.log("✅ User already logged in, redirecting to dashboard")
           navigate("/dashboard", { replace: true })
         }
       } catch (error) {
-        console.error("❌ Error checking session:", error)
+        // Silent error handling
       }
     }
     
@@ -27,16 +25,13 @@ export default function Login() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("🔄 Auth state change:", event, session ? "Session exists" : "No session")
       
       if (event === 'SIGNED_IN' && session) {
-        console.log("✅ User signed in successfully, navigating to dashboard")
         // Small delay to ensure profile creation completes
         setTimeout(() => {
           navigate("/dashboard", { replace: true })
         }, 1000)
       } else if (event === 'SIGNED_OUT') {
-        console.log("👋 User signed out")
         setError(null)
       }
     })
@@ -48,8 +43,6 @@ export default function Login() {
     try {
       setIsLoading(true)
       setError(null)
-      
-      console.log("🚀 Initiating Google login...")
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -63,13 +56,9 @@ export default function Login() {
       })
 
       if (error) {
-        console.error("❌ Google login error:", error)
         setError(error.message)
-      } else {
-        console.log("🔄 Google login initiated")
       }
     } catch (error) {
-      console.error("❌ Unexpected error:", error)
       setError("An unexpected error occurred. Please try again.")
     } finally {
       setIsLoading(false)

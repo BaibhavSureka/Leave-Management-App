@@ -95,21 +95,11 @@ approvalsRouter.post("/:id/decision", async (c) => {
           startDate: leave.start_date,
           endDate: leave.end_date,
         });
-        console.log(
-          "Calendar event created (POST decision):",
-          calendar_event_id
-        );
       } catch (e) {
-        console.error(
-          "Calendar creation failed (POST decision), continuing:",
-          e?.message || e
-        );
         calendar_event_id = null;
       }
     } else {
-      console.log(
-        "Calendar disabled via ENABLE_CALENDAR, skipping (POST decision)"
-      );
+      // Calendar disabled
     }
   }
 
@@ -143,9 +133,8 @@ approvalsRouter.post("/:id/decision", async (c) => {
   try {
     await sendEmail({ to: toEmail, subject, html });
   } catch (e) {
-    console.error("Email notification failed:", e.message);
+    // Email notification failed, continue silently
   }
-
   try {
     await sendSlack({
       text: `Leave ${decision}: ${summaryForSlack(leave)} by ${
@@ -153,9 +142,8 @@ approvalsRouter.post("/:id/decision", async (c) => {
       }`,
     });
   } catch (e) {
-    console.error("Slack notification failed:", e.message);
+    // Slack notification failed, continue silently
   }
-
   return c.json(updated);
 });
 
@@ -208,21 +196,11 @@ approvalsRouter.put("/:id", async (c) => {
           startDate: leave.start_date,
           endDate: leave.end_date,
         });
-        console.log(
-          "Calendar event created (PUT approval):",
-          calendar_event_id
-        );
       } catch (e) {
-        console.error(
-          "Calendar creation failed (PUT approval), continuing:",
-          e?.message || e
-        );
         calendar_event_id = null;
       }
     } else {
-      console.log(
-        "Calendar disabled via ENABLE_CALENDAR, skipping (PUT approval)"
-      );
+      // Calendar disabled
     }
   }
 
@@ -258,17 +236,15 @@ approvalsRouter.put("/:id", async (c) => {
   try {
     await sendEmail({ to: toEmail, subject, html });
   } catch (e) {
-    console.error("Email notification failed (PUT):", e.message);
+    // Email notification failed, continue silently
   }
-
   try {
     await sendSlack({
       text: `Leave ${status}: ${summaryForSlack(leave)} by ${info.user.email}`,
     });
   } catch (e) {
-    console.error("Slack notification failed (PUT):", e.message);
+    // Slack notification failed, continue silently
   }
-
   return c.json(updated);
 });
 

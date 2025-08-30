@@ -70,8 +70,6 @@ function Layout({ children }) {
       }
       
       try {
-        console.log("🔍 Fetching profile with token:", token.substring(0, 20) + "...")
-        
         // First, try to get existing profile
         const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },

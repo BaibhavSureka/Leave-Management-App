@@ -38,15 +38,6 @@ authRouter.post("/profiles/upsert", async (c) => {
   const isFirstAdmin = info.user.email === process.env.FIRST_ADMIN_EMAIL;
   const defaultRole = isFirstAdmin ? "ADMIN" : "MEMBER";
 
-  // Debug logging
-  console.log("🔍 Profile creation debug:");
-  console.log("User email:", info.user.email);
-  console.log("Existing profile role:", existingProfile?.role || "none");
-  console.log("Should set role?", shouldSetRole);
-  console.log("FIRST_ADMIN_EMAIL env var:", process.env.FIRST_ADMIN_EMAIL);
-  console.log("Is first admin?", isFirstAdmin);
-  console.log("Default role (if setting):", defaultRole);
-
   const profileData = {
     id: info.user.id,
     email: info.user.email,
@@ -57,9 +48,6 @@ authRouter.post("/profiles/upsert", async (c) => {
   // Only include role if we should set it (first login or no existing role)
   if (shouldSetRole) {
     profileData.role = defaultRole;
-    console.log("✅ Setting role to:", defaultRole);
-  } else {
-    console.log("✅ Preserving existing role:", existingProfile.role);
   }
 
   await supabase.from("profiles").upsert(profileData, { onConflict: "id" });

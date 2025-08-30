@@ -34,7 +34,7 @@ export default function AdminUserLeaveTypes() {
       setUserLeaveTypes(assignmentsData || [])
 
     } catch (error) {
-      console.error("Error loading data:", error)
+      // Error handled silently
     } finally {
       setLoading(false)
     }

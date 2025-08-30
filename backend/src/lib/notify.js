@@ -6,7 +6,7 @@ export async function sendEmail({ to, subject, html }) {
     !process.env.SMTP_USER ||
     !process.env.SMTP_PASS
   ) {
-    console.log("Email sending skipped - SMTP not configured properly");
+    // Email sending skipped - SMTP not configured properly
     console.log(`Would send email to ${to}: ${subject}`);
     return;
   }

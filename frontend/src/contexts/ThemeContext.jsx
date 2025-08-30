@@ -5,7 +5,7 @@ const ThemeContext = createContext()
 export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('theme')
-    if (!saved) return false
+    if (!saved) return true // Default to dark mode
     
     // Handle both JSON and plain string values
     try {

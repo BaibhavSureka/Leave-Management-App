@@ -14,7 +14,7 @@ export default function MyLeaves() {
       const data = await res.json()
       setRows(data || [])
     } catch (error) {
-      console.error("Error loading leaves:", error)
+      // Error handled silently
     } finally {
       setLoading(false)
     }

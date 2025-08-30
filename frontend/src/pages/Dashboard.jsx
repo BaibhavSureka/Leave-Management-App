@@ -65,7 +65,7 @@ export default function Dashboard() {
           }
         }
       } catch (error) {
-        console.error("Error loading dashboard:", error)
+        // Error handled silently
       } finally {
         setLoading(false)
       }

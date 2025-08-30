@@ -8,31 +8,20 @@ export default function Approvals() {
 
   async function load() {
     try {
-      console.log('Loading approvals...');
       const token = (await supabase.auth.getSession()).data.session?.access_token
-      console.log('Token exists:', !!token);
-      console.log('Backend URL:', import.meta.env.VITE_BACKEND_URL);
       
       const url = `${import.meta.env.VITE_BACKEND_URL}/api/approvals`;
-      console.log('Making request to:', url);
       
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       })
       
-      console.log('Response status:', res.status);
-      console.log('Response ok:', res.ok);
-      
       if (res.ok) {
         const data = await res.json()
-        console.log('Approvals data:', data);
         setRows(data || [])
-      } else {
-        const errorText = await res.text();
-        console.error('Error response:', errorText);
       }
     } catch (error) {
-      console.error("Error loading approvals:", error)
+      // Error handled silently
     } finally {
       setLoading(false)
     }
@@ -44,13 +33,9 @@ export default function Approvals() {
 
   const updateStatus = async (id, status) => {
     try {
-      console.log(`Attempting to update leave ${id} to status ${status}`);
       const token = (await supabase.auth.getSession()).data.session?.access_token
-      console.log('Token exists:', !!token);
-      console.log('Backend URL:', import.meta.env.VITE_BACKEND_URL);
       
       const url = `${import.meta.env.VITE_BACKEND_URL}/api/approvals/${id}`;
-      console.log('Making request to:', url);
       
       const res = await fetch(url, {
         method: "PUT",
@@ -61,21 +46,14 @@ export default function Approvals() {
         body: JSON.stringify({ status }),
       })
       
-      console.log('Response status:', res.status);
-      console.log('Response ok:', res.ok);
-      
       if (res.ok) {
-        const responseData = await res.json();
-        console.log('Success response:', responseData);
         alert(`Leave request ${status.toLowerCase()} successfully`)
         load()
       } else {
         const errorData = await res.text();
-        console.error('Error response:', errorData);
         alert(`Error ${status.toLowerCase()}ing leave request: ${errorData}`)
       }
     } catch (error) {
-      console.error('Network error:', error);
       alert(`Error ${status.toLowerCase()}ing leave request: ${error.message}`)
     }
   }
