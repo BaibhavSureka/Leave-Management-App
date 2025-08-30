@@ -1,4 +1,4 @@
- import { supabase } from "../lib/supabase.js"
+import { supabase } from "../lib/supabase.js"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
@@ -7,11 +7,9 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [showEmailLogin, setShowEmailLogin] = useState(false)
-  const [isRegistering, setIsRegistering] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
-    full_name: ""
+    password: ""
   })
 
   useEffect(() => {
@@ -72,9 +70,9 @@ export default function Login() {
     }
   }
 
-  const handleEmailAuth = async (e) => {
+  const handleEmailLogin = async (e) => {
     e.preventDefault()
-    if (!formData.email || !formData.password || (isRegistering && !formData.full_name)) {
+    if (!formData.email || !formData.password) {
       setError("Please fill in all required fields")
       return
     }
@@ -83,59 +81,31 @@ export default function Login() {
       setIsLoading(true)
       setError(null)
 
-      if (isRegistering) {
-        // Register via backend API
-        console.log("Attempting registration with:", formData)
-        console.log("Backend URL:", import.meta.env.VITE_BACKEND_URL)
-        
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/register`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        })
+      // Sign in via backend API
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      })
 
-        console.log("Registration response status:", response.status)
-        console.log("Registration response headers:", response.headers)
-        
-        const data = await response.json()
-        console.log("Registration response data:", data)
-        
-        if (!response.ok) {
-          throw new Error(data.error || "Registration failed")
-        }
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed")
+      }
 
-        setError(null)
-        setIsRegistering(false)
-        alert("Registration successful! Please sign in with your credentials.")
-      } else {
-        // Sign in via backend API
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-          }),
-        })
+      // Set the session with Supabase using the tokens from backend
+      const { error } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      })
 
-        const data = await response.json()
-        if (!response.ok) {
-          throw new Error(data.error || "Login failed")
-        }
-
-        // Set the session with Supabase using the tokens from backend
-        const { error } = await supabase.auth.setSession({
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
-        })
-
-        if (error) {
-          throw new Error(error.message)
-        }
+      if (error) {
+        throw new Error(error.message)
       }
     } catch (error) {
       setError(error.message)
@@ -229,49 +199,8 @@ export default function Login() {
             </button>
           ) : (
             <div className="space-y-4">
-              {/* Tab Toggle */}
-              <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 p-1 bg-gray-50 dark:bg-gray-700">
-                <button
-                  onClick={() => setIsRegistering(false)}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                    !isRegistering
-                      ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                  }`}
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={() => setIsRegistering(true)}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                    isRegistering
-                      ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                  }`}
-                >
-                  Register
-                </button>
-              </div>
-
               {/* Email/Password Form */}
-              <form onSubmit={handleEmailAuth} className="space-y-4">
-                {isRegistering && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      name="full_name"
-                      value={formData.full_name}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      placeholder="Enter your full name"
-                      required
-                    />
-                  </div>
-                )}
-                
+              <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Email Address
@@ -310,10 +239,10 @@ export default function Login() {
                   {isLoading ? (
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      {isRegistering ? 'Creating Account...' : 'Signing In...'}
+                      Signing In...
                     </div>
                   ) : (
-                    isRegistering ? 'Create Account' : 'Sign In'
+                    'Sign In'
                   )}
                 </button>
               </form>
