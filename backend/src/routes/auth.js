@@ -3,6 +3,12 @@ import { getSupabaseAdmin, getUserFromToken } from "../lib/supabase.js";
 
 export const authRouter = new Hono();
 
+// Test endpoint to verify routes are working
+authRouter.get("/test", async (c) => {
+  console.log("Auth test endpoint hit")
+  return c.json({ message: "Auth routes are working", timestamp: new Date().toISOString() });
+});
+
 // Debug endpoint to check environment variable
 authRouter.get("/debug/env", async (c) => {
   return c.json({
