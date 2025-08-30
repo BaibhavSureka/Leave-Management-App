@@ -1057,10 +1057,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For support and questions:
 
-- 📧 Email: prateek@epyc.in
+- 📧 Email: baibhavsureka1@gmail.com
 - 🐛 Issues: [GitHub Issues](https://github.com/BaibhavSureka/Leave-Management-App/issues)
 - 📖 Documentation: This README file
-
----
-
-**Built with ❤️ for modern leave management**
