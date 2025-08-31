@@ -96,21 +96,41 @@ cp backend/.env.example backend/.env
 ```
 
 ```env
-# Supabase (Required)
+# Supabase Configuration
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# 🔑 ADMIN SETUP - Set your email to become admin
-FIRST_ADMIN_EMAIL=your_email@gmail.com
-
-# Google OAuth (Required)
+# Google OAuth (for admin calendar integration)
 GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:8787/api/admin/google/oauth/callback
 
-# Server Config
+# First Admin Email (for initial setup - optional if using demo accounts)
+FIRST_ADMIN_EMAIL=your_email@gmail.com
+
+# Optional: Email Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+SMTP_FROM=your_email@gmail.com
+
+# Optional: Slack Integration
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+
+# Optional: Calendar Integration (set to 'true' to enable)
+ENABLE_CALENDAR=true
+DEFAULT_CALENDAR_ID=your_calendar_id@group.calendar.google.com
+
+# Server Configuration
 PORT=8787
 APP_ORIGIN=http://localhost:5173
 NODE_ENV=development
+
+# Demo Accounts (created via SQL script):
+# Admin: admin@demo.com / password123
+# Manager: manager@demo.com / password123  
+# Member: member@demo.com / password123
 ```
 
 **Frontend (.env):**
