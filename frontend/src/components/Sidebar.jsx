@@ -1,11 +1,22 @@
 import { Link, useLocation } from "react-router-dom"
+import { useState, useEffect } from "react"
 import { useTheme } from "../contexts/ThemeContext"
+import React from "react";
 
 export default function Sidebar({ profile, onSignOut }) {
   const location = useLocation()
   const { theme, toggleTheme } = useTheme()
   
   const role = profile?.role || "MEMBER"
+
+  // Stabilize avatar to prevent flicker
+  const [avatar, setAvatar] = useState("/placeholder-user.jpg");
+
+  useEffect(() => {
+    if (profile?.avatar_url) {
+      setAvatar(profile.avatar_url);
+    }
+  }, [profile?.avatar_url]);
 
   const isActive = (path) => {
     return location.pathname === path
@@ -44,9 +55,10 @@ export default function Sidebar({ profile, onSignOut }) {
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-3">
           <img
-            src={profile?.avatar_url || "/placeholder-user.jpg"}
+            src={profile?.avatar_url || avatar}
             alt="Profile"
             className="w-10 h-10 rounded-full"
+            onError={(e) => { e.currentTarget.src = '/placeholder-user.jpg' }}
           />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">

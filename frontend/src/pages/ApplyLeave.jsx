@@ -15,9 +15,23 @@ export default function ApplyLeave() {
 
   useEffect(() => {
     ;(async () => {
-      // For demo, fetch all types (in real, fetch assigned types by user via backend if needed)
-      const { data, error } = await supabase.from("leave_types").select("*").eq("active", true)
-      if (!error) setTypes(data)
+      try {
+        const token = (await supabase.auth.getSession()).data.session?.access_token
+        // Fetch assigned leave types for the current user
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/leaves/types`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setTypes(data)
+        } else {
+          console.error("Failed to fetch leave types")
+          setTypes([])
+        }
+      } catch (error) {
+        console.error("Error fetching leave types:", error)
+        setTypes([])
+      }
     })()
   }, [])
 

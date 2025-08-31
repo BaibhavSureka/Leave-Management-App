@@ -5,23 +5,81 @@ import { deleteCalendarEvent } from "../lib/google.js";
 export const leavesRouter = new Hono();
 
 async function requireUser(c) {
+  console.log("=== REQUIRE USER ===");
   const token = c.req.header("authorization")?.replace("Bearer ", "");
+  console.log("Token received:", token ? "Yes" : "No");
+
   const info = await getUserFromToken(token);
-  if (!info) return c.json({ error: "unauthorized" }, 401);
+  console.log("User info:", {
+    user: info?.user ? { id: info.user.id, email: info.user.email } : null,
+    profile: info?.profile
+      ? { id: info.profile.id, role: info.profile.role }
+      : null,
+  });
+
+  if (!info) {
+    console.log("No user info - returning 401");
+    return c.json({ error: "unauthorized" }, 401);
+  }
   return info;
 }
 
 leavesRouter.get("/", async (c) => {
+  console.log("=== GET /leaves endpoint hit ===");
   const info = await requireUser(c);
-  if (info.status) return info;
+  if (info.status) {
+    console.log("Auth failed, returning error");
+    return info;
+  }
+
+  console.log("Getting leaves for user:", info.user.id);
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("leaves")
     .select("*, leave_types(name)")
     .eq("user_id", info.user.id)
     .order("created_at", { ascending: false });
-  if (error) return c.json({ error: error.message }, 400);
+
+  if (error) {
+    console.log("Database error:", error);
+    return c.json({ error: error.message }, 400);
+  }
+
+  console.log("Leaves data:", data);
   return c.json(data);
+});
+
+leavesRouter.get("/types", async (c) => {
+  console.log("=== GET /leaves/types endpoint hit ===");
+  const info = await requireUser(c);
+  if (info.status) {
+    console.log("Auth failed, returning error");
+    return info;
+  }
+
+  console.log("Getting assigned leave types for user:", info.user.id);
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("user_leave_types")
+    .select(
+      `
+      leave_type_id,
+      leave_types!user_leave_types_leave_type_id_fkey(*)
+    `
+    )
+    .eq("user_id", info.user.id);
+
+  if (error) {
+    console.log("Database error:", error);
+    return c.json({ error: error.message }, 400);
+  }
+
+  // Extract the leave_types data
+  const leaveTypes = data
+    .map((item) => item.leave_types)
+    .filter((type) => type && type.active);
+  console.log("Assigned leave types:", leaveTypes);
+  return c.json(leaveTypes);
 });
 
 leavesRouter.post("/", async (c) => {

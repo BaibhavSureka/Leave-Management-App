@@ -34,6 +34,31 @@ try {
 
 const app = new Hono();
 
+// Add request logging middleware
+app.use("*", async (c, next) => {
+  const start = Date.now();
+  const method = c.req.method;
+  const url = c.req.url;
+  const path = new URL(url).pathname;
+
+  console.log(`📨 ${method} ${path} - Started`);
+
+  // Log headers for auth endpoints
+  if (path.includes("/auth/")) {
+    const authHeader = c.req.header("authorization");
+    console.log(`   Auth header: ${authHeader ? "Present" : "Missing"}`);
+  }
+
+  await next();
+
+  const end = Date.now();
+  const status = c.res.status;
+  const duration = end - start;
+
+  const statusEmoji = status >= 400 ? "❌" : status >= 300 ? "⚠️" : "✅";
+  console.log(`${statusEmoji} ${method} ${path} - ${status} (${duration}ms)`);
+});
+
 app.use(
   "*",
   cors({

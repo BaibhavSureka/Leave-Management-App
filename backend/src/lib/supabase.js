@@ -1,35 +1,71 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js";
 
-let supabaseAdmin
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export function getSupabaseAdmin() {
-  if (!supabaseAdmin) {
-    supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
-  }
-  return supabaseAdmin
+export function getSupabase() {
+  return createClient(supabaseUrl, supabaseKey);
 }
 
-// Verify a user access token (from frontend) and return user + profile
-export async function getUserFromToken(accessToken) {
-  if (!accessToken) return null
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${accessToken}` } },
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+export function getSupabaseAdmin() {
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
-  if (error || !user) return null
+export async function getUserFromToken(token) {
+  console.log("getUserFromToken: Starting with token present:", !!token);
 
-  const admin = getSupabaseAdmin()
-  const { data: profile } = await admin.from("profiles").select("*").eq("id", user.id).single()
+  if (!token) {
+    console.log("getUserFromToken: No token provided");
+    return null;
+  }
 
-  return { user, profile }
+  const supabase = getSupabaseAdmin();
+
+  try {
+    console.log("getUserFromToken: Verifying token with Supabase");
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(token);
+
+    if (userError) {
+      console.log(
+        "getUserFromToken: Token verification failed:",
+        userError.message
+      );
+      return null;
+    }
+
+    if (!user) {
+      console.log("getUserFromToken: No user found for token");
+      return null;
+    }
+
+    console.log("getUserFromToken: ✅ Token valid for user:", user.email);
+
+    // Import ProfileService here to avoid circular imports
+    const { profileService } = await import("./profile-service.js");
+
+    try {
+      console.log("getUserFromToken: Fetching profile via ProfileService");
+      const profile = await profileService.getProfile(user.id);
+      console.log(
+        "getUserFromToken: Profile result:",
+        profile ? "found" : "not found"
+      );
+
+      return { user, profile };
+    } catch (profileError) {
+      console.error(
+        "getUserFromToken: Profile fetch failed:",
+        profileError.message
+      );
+      // Return user info even if profile fetch fails
+      return { user, profile: null };
+    }
+  } catch (error) {
+    console.error("getUserFromToken: Unexpected error:", error.message);
+    return null;
+  }
 }

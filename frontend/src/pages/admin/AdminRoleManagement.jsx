@@ -158,9 +158,7 @@ export default function AdminRoleManagement() {
                   <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {user.avatar_url && (
-                          <img className="h-8 w-8 rounded-full mr-3" src={user.avatar_url} alt="" />
-                        )}
+                        <img className="h-8 w-8 rounded-full mr-3" src={user.avatar_url || '/placeholder-user.jpg'} alt="" onError={(e) => { e.currentTarget.src = '/placeholder-user.jpg' }} />
                         <div>
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {user.full_name || 'No name set'}

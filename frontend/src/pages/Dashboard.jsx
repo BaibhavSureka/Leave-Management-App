@@ -11,6 +11,7 @@ export default function Dashboard() {
   })
   const [recentLeaves, setRecentLeaves] = useState([])
   const [loading, setLoading] = useState(true)
+  const [avatar, setAvatar] = useState("/placeholder-user.jpg")
 
   useEffect(() => {
     ;(async () => {
@@ -22,11 +23,22 @@ export default function Dashboard() {
         const data = await res.json()
         setProfile(data.profile)
 
-        // ensure profile row exists
+        // Stabilize avatar state
+        if (data.profile?.avatar_url) {
+          setAvatar(data.profile.avatar_url)
+        } else {
+          setAvatar("/placeholder-user.jpg")
+        }
+
+        // Debug log for avatar
+        console.log("Avatar URL:", data.profile?.avatar_url);
+
+        // ensure profile row exists, always send id
         await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/profiles/upsert`, {
           method: "POST",
           headers: { "content-type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({
+            id: data.user?.id,
             full_name: data.user?.user_metadata?.full_name,
             avatar_url: data.user?.user_metadata?.avatar_url,
           }),
@@ -147,13 +159,14 @@ export default function Dashboard() {
                     })}
                   </p>
                 </div>
-                {profile?.avatar_url && (
-                  <img 
-                    src={profile.avatar_url} 
-                    alt="Profile" 
-                    className="w-12 h-12 rounded-full border-2 border-blue-100 dark:border-blue-800"
-                  />
-                )}
+                  {profile && (
+                    <img
+                      src={avatar}
+                      alt="User Avatar"
+                      className="w-12 h-12 rounded-full border-2 border-blue-100 dark:border-blue-800"
+                      onError={e => { e.currentTarget.src = "/placeholder-user.jpg" }}
+                    />
+                  )}
               </div>
             </div>
           </div>
