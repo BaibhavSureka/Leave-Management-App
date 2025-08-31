@@ -62,21 +62,55 @@ app.use("*", async (c, next) => {
 app.use(
   "*",
   cors({
-    origin: "*",
+    origin: [
+      "https://leave-management-app-psi.vercel.app", // Production frontend
+      "http://localhost:5173", // Local development
+      "http://localhost:3000", // Alternative local port
+      "http://127.0.0.1:5173", // Alternative localhost
+      "http://127.0.0.1:3000", // Alternative localhost
+    ],
     credentials: true,
     allowHeaders: [
       "Content-Type",
       "Authorization",
       "X-Requested-With",
       "Accept",
+      "Origin",
+      "Access-Control-Request-Method",
+      "Access-Control-Request-Headers",
     ],
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    exposeHeaders: ["Content-Length"],
+    exposeHeaders: ["Content-Length", "X-Kuma-Revision"],
     maxAge: 600,
   })
 );
 
+// Handle preflight OPTIONS requests explicitly
+app.options("*", (c) => {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin":
+        "https://leave-management-app-psi.vercel.app",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Max-Age": "600",
+    },
+  });
+});
+
 app.get("/", (c) => c.json({ ok: true, name: "Leave Management API" }));
+
+// CORS test endpoint
+app.get("/api/test-cors", (c) => {
+  return c.json({
+    message: "CORS is working!",
+    origin: c.req.header("origin"),
+    timestamp: new Date().toISOString(),
+  });
+});
 
 try {
   app.route("/api/auth", authRouter);
