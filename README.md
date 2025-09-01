@@ -244,7 +244,6 @@ DEBUG=true
 5. Open Pull Request
 
 
-
 ## 📞 Support
 
 For support and questions:
